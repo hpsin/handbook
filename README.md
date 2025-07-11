@@ -344,7 +344,8 @@ The client owner(s) can revoke all authorizations at once on the OAuth App’s s
 
 ## Security considerations
 
-- The `client_secret` must not be shared with user-accessible parts of the OAuth client, such as browser-based application clients or native applications, in order to prevent counterfeit clients ([compare Section 10.1 of OAuth 2.0 spec](https://tools.ietf.org/html/rfc6749#section-10.1)). If an attacker would manage to intercept the redirect after authorization was granted, they could use the known `client_id` and `client_secret` to generate a token themselves. GitHub does not support the [PKCE extension](https://tools.ietf.org/html/rfc7636).
+- The `client_secret` must not be shared with user-accessible parts of the OAuth client if you are implementing a webapp with a front-end and back-end (known as a "confidential client" in OAuth). However, it is inevitable that you must embed your `client_secret` in native applications or "public clients", which cannot keep something secret from the user executing the code. This means that native applications can be spoofed by counterfeit clients ([compare Section 10.1 of OAuth 2.0 spec](https://tools.ietf.org/html/rfc6749#section-10.1)).
+- Use `state` and [PKCE](https://tools.ietf.org/html/rfc7636) to protect your authentication flow. If an attacker would manage to intercept the redirect after authorization was granted, they could use the known `client_id` and `client_secret` (leaked or gathered from a public client) to generate a token themselves.
 - The client should request access tokens with the minimal scope necessary.
 - Avoid passing access tokens as part of URLs. Browser history or request logs can expose tokens unknowingly. The client’s configured `redirect_url` must point to one of two things:
   1. The client back-end, which can directly retrieve the OAuth Access token and use it to authenticate as the user. The Authorization server can persist the token if future requests authenticated as the user will be necessary for the OAuth app.
@@ -389,7 +390,7 @@ It is possible that when sending requests with an installation token that was cr
 
 ### Scopes are not supported
 
-The `?scope` query parameter is not supported for the OAuth web flow. The OAuth tokens created by GitHub apps are constrained by the permission accepted by each installation.
+The `?scope` query parameter is not supported for the OAuth web flow. The OAuth tokens created by GitHub apps are constrained by the permission accepted by each installation and cannot be changed dynamically.
 
 ### Permissions & repositories for OAuth tokens cannot be limited
 
@@ -398,7 +399,7 @@ When [`creating an installation access token`](https://docs.github.com/en/rest/r
 1. `permissions` - a subset of the installation's permissions
 2. `repositories` or `repository_ids` - a subset of the installation's repositories.
 
-There are no possibility to reduce permissions/repository access for user-to-server (OAuth) access tokens as of February 2021
+When creating a user-to-server token for a GitHub app, you can restrict the token to a single repository using the `repository_id` parameter when [exchanging the authorization code for the access token](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app#using-the-web-application-flow-to-generate-a-user-access-token).
 
 ### Differences between api.github.com and GHE
 
